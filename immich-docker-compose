@@ -1,0 +1,61 @@
+version: "3.8"
+
+services:
+  immich-server:
+    container_name: immich_server
+    image: ghcr.io/immich-app/immich-server:latest
+    command: ["start.sh", "immich"]
+    volumes:
+      - immich-upload:/usr/src/app/upload
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - 2283:3001
+    depends_on:
+      - redis
+      - database
+    restart: unless-stopped
+
+  immich-microservices:
+    container_name: immich_microservices
+    image: ghcr.io/immich-app/immich-server:latest
+    command: ["start.sh", "microservices"]
+    devices:
+      - /dev/dri:/dev/dri  # If using Intel QuickSync
+    volumes:
+      - immich-upload:/usr/src/app/upload
+      - /etc/localtime:/etc/localtime:ro
+    depends_on:
+      - redis
+      - database
+    restart: unless-stopped
+
+  immich-machine-learning:
+    container_name: immich_machine_learning
+    image: ghcr.io/immich-app/immich-machine-learning:latest
+    volumes:
+      - immich-model-cache:/cache
+    restart: unless-stopped
+
+  redis:
+    container_name: immich_redis
+    image: redis:6.2-alpine@sha256:b6124ab2e45cc332e16398022a411d7e37181f21ff7874835e0180f56a09e82a
+    restart: unless-stopped
+
+  database:
+    container_name: immich_postgres
+    image: tensorchord/pgvecto-rs:pg14-v0.1.11@sha256:0335a1a22f8c5dd1b697f14f079934f5152eaaa216c09b61e293be285491f8ee
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: immich
+    volumes:
+      - immich-pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  immich-upload:
+    external: true
+  immich-pgdata:
+    external: true
+  immich-model-cache:
+    external: true

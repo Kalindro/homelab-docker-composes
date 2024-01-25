@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  npm:
+    image: jc21/nginx-proxy-manager:latest
+    container_name: npm
+    restart: unless-stopped
+    ports:
+      - '80:80'       # Public HTTP Port
+      - '443:443'     # Public HTTPS Port
+      - '81:81'       # Admin Web Port
+    environment:
+      DISABLE_IPV6: 'true'
+      
+    volumes:
+      - npm-data:/data
+      - npm-letsencrypt:/etc/letsencrypt
+      
+    networks:
+      mcvlan-MANAG:
+        ipv4_address: 192.168.5.10
+
+volumes:
+  npm-data:
+    external: true
+  npm-letsencrypt:
+    external: true
+
+networks:
+  mcvlan-MANAG:
+    external: true
